@@ -1,3 +1,4 @@
+/* eslint-disable no-trailing-spaces */
 /* eslint-disable quotes */
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable jsx-quotes */
@@ -19,7 +20,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // components import
 import CourseLists from './src/screens/CourseLists';
 import Courses from './src/screens/Courses';
-import Attendance from './src/screens/Attendance'
+import Attendance from './src/screens/Attendance';
 import AddCourses from './src/screens/AddCourses';
 
 const Stack = createNativeStackNavigator();
@@ -34,7 +35,13 @@ function App({navigation}){
         component={CourseLists} 
         options={{ 
           title: 'List of Courses',
-          headerRight: () => (<Button  title="Add Courses"/>),
+          headerStyle: {
+            backgroundColor: '#222831',
+          },
+          headerTitleStyle: {
+              fontSize: 20,
+              color: '#fff',
+            },
         }}/>
         <Stack.Screen name='Courses' component={Courses} />
         <Stack.Screen name='Attendance' component={Attendance} />
