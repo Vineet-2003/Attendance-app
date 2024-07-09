@@ -1,8 +1,8 @@
-/* eslint-disable no-trailing-spaces */
-/* eslint-disable quotes */
-// eslint-disable-next-line prettier/prettier
-/* eslint-disable jsx-quotes */
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable comma-dangle */
 /* eslint-disable prettier/prettier */
+/* eslint-disable prettier/prettier */
+
 import {
   StyleSheet,
   Text,
@@ -10,42 +10,48 @@ import {
   ScrollView,
   Pressable,
   TouchableOpacity,
-} from "react-native";
-import React from "react";
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const CourseLists = ({navigation}) => {
-  const courses = [
-    "Power electronics",
-    "DC machines",
-    "Power System Analysis",
-    "power electronics",
-    "DC machines",
-    "power System Analysis",
-    "power electronics",
-    "DC machines",
-    "power System Analysis",
-  ];
+  const [courses, setCourses] = useState([]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const storedCourses = await AsyncStorage.getItem('courses');
+        const parsedCourses = storedCourses ? JSON.parse(storedCourses) : [];
+        setCourses(parsedCourses);
+      } catch (error) {
+        console.log(error);
+        console.log('Failed to fetch courses from Storage');
+      }
+    };
+
+    // Fetch courses on initial load and when screen focuses
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchCourses();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View className="my-6 mx-2 flex flex-col space-y-4">
-          {courses.map((courseName, index) => (
+        <View style={styles.courseContainer}>
+          {courses.map((course, index) => (
             <Pressable
-              key={index++}
+              key={index}
               onPress={() =>
-                navigation.navigate("Courses", {
-                  courseId: 124,
-                })
+                navigation.navigate('Courses', course)
               }
             >
-              <View
-                className="border-gray-600 flex-1 justify-center"
-                style={styles.ButtonContainer}
-              >
-                <Text className="text-xl px-4" style={styles.text}>
-                  {courseName}
-                </Text>
+              <View style={styles.ButtonContainer}>
+                <Text style={styles.text}>{course.name}</Text>
               </View>
             </Pressable>
           ))}
@@ -53,9 +59,9 @@ const CourseLists = ({navigation}) => {
       </ScrollView>
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => navigation.navigate("AddCourses")}
+        onPress={() => navigation.navigate('AddCourses')}
       >
-        <Text className="text-7xl text-gray-300">+</Text>
+        <Text style={{fontSize:45}}>+</Text>
       </TouchableOpacity>
     </View>
   );
@@ -67,21 +73,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollViewContent: {
-    flexGrow: 1,
+  courseContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    margin: 10,
   },
   floatingButton: {
-    position: "absolute",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#222831",
-    justifyContent: "center",
-    alignItems: "center",
-    bottom: 20,
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 50,
+    backgroundColor: '#222831',
+    // justifyContent: 'center',
+    alignItems: 'center',
+    bottom: 30,
     right: 150,
     elevation: 8, // This adds shadow for Android
-    shadowColor: "#000", // This adds shadow for iOS
+    shadowColor: '#000', // This adds shadow for iOS
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.8,
     shadowRadius: 2,
@@ -89,10 +98,17 @@ const styles = StyleSheet.create({
   ButtonContainer: {
     height: 60,
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     elevation: 4,
+    flex: 1,
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderColor: 'grey',
+    marginBottom: 10,
   },
   text: {
-    color: "#393E46",
+    fontSize: 18,
+    paddingHorizontal: 16,
+    color: '#393E46',
   },
 });

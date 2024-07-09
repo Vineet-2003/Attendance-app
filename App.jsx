@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable no-trailing-spaces */
 /* eslint-disable quotes */
 /* eslint-disable react/no-unstable-nested-components */
@@ -11,8 +12,6 @@
  */
 
 import React from 'react';
-import {Text, View, Button} from 'react-native';
-
 // navigation
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -22,7 +21,7 @@ import CourseLists from './src/screens/CourseLists';
 import Courses from './src/screens/Courses';
 import Attendance from './src/screens/Attendance';
 import AddCourses from './src/screens/AddCourses';
-
+import ViewAttendance from './src/screens/ViewAttendance';
 const Stack = createNativeStackNavigator();
 
 
@@ -44,8 +43,21 @@ function App({navigation}){
             },
         }}/>
         <Stack.Screen name='Courses' component={Courses} />
-        <Stack.Screen name='Attendance' component={Attendance} />
+        <Stack.Screen name='Attendance' component={Attendance} 
+          options={{ 
+          title: 'Attendance',
+          headerStyle: {
+            backgroundColor: '#222831',
+          },
+          headerTitleStyle: {
+              fontSize: 20,
+              color: '#fff',
+          },
+          headerTintColor: '#fff',
+        }}
+        />
         <Stack.Screen name='AddCourses' component={AddCourses} />
+        <Stack.Screen name='ViewAttendance' component={ViewAttendance} />
       </Stack.Navigator>
     </NavigationContainer>
   );

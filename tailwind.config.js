@@ -1,16 +1,25 @@
-/* eslint-disable quotes */
 /* eslint-disable prettier/prettier */
+/* eslint-disable quotes */
+// module.exports = {
+//   content: [],
+//   theme: {
+//     extend: {},
+//   },
+//   plugins: [],
+//   corePlugins: require("tailwind-rn/unsupported-core-plugins"),
+// };
+ 
 
-const defaultTheme = require('tailwindcss/defaultTheme')
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./App.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}", "./src/**/**/*.{js,jsx,ts,tsx}"],
+ /** @type {import('tailwindcss').Config} */
+ module.exports = {
+  content: [
+    "./App.{js,jsx,ts,tsx}",
+    "./screens/**/*.{js,jsx,ts,tsx}",
+    "./components/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
   theme: {
-    extend: {
-      fontFamily: {
-        'sans': ['"Montserrat"', ...defaultTheme.fontFamily.sans],
-      },
-    },
+    extend: {},
   },
   plugins: [],
 };
