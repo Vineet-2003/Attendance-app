@@ -4,7 +4,16 @@
 /* eslint-disable semi */
 /* eslint-disable prettier/prettier */
 import React, {useState} from "react";
-import {ScrollView, StyleSheet, Text, View, Button, Alert, Platform, PermissionsAndroid, Linking} from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+} from "react-native";
 import {
   RadioButton,
   TextInput,
@@ -13,17 +22,17 @@ import {
   Button as PaperButton,
   Title,
 } from "react-native-paper";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import ReadExcelFile from "../components/ReadExcelFile";
-import DocumentPicker from 'react-native-document-picker';
-import RNFS from 'react-native-fs';
-import XLSX from 'xlsx';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import DocumentPicker from "react-native-document-picker";
+import RNFS from "react-native-fs";
+import XLSX from "xlsx";
 
 const AddCourses = ({navigation}) => {
   const [name, setName] = useState("");
   const [id, setId] = useState("");
   const [year, setYear] = useState("first");
-  const [section, setSection] = useState("A");
+  const [type, setType] = useState("");
+  const [section, setSection] = useState("");
   const [data, setData] = useState([]);
 
   const handleSubmit = async () => {
@@ -32,6 +41,7 @@ const AddCourses = ({navigation}) => {
         id: id,
         name: name,
         section: section,
+        type: type,
         year: year,
       };
       const studentData = {
@@ -40,38 +50,67 @@ const AddCourses = ({navigation}) => {
       };
       try {
         // Get existing courses from AsyncStorage
-        const existingCourses = await AsyncStorage.getItem('courses');
-        const existingStudentData = await AsyncStorage.getItem('studentData');
-        const parsedCourses = existingCourses ? JSON.parse(existingCourses) : [];
-        const parsedStudentData = existingStudentData ? JSON.parse(existingStudentData) : [];
-        console.log(parsedCourses);
-        const exists = parsedCourses.some(obj => obj.id === id);
-        if (exists) {
+        const existingCourses = await AsyncStorage.getItem("courses");
+        const existingStudentData = await AsyncStorage.getItem("studentData");
+        const existingAttendanceData = await AsyncStorage.getItem(
+          "AttendanceData",
+        );
+        const parsedCourses = existingCourses
+          ? JSON.parse(existingCourses)
+          : [];
+        const parsedStudentData = existingStudentData
+          ? JSON.parse(existingStudentData)
+          : [];
+        const parsedAttendanceData = existingAttendanceData
+          ? JSON.parse(existingAttendanceData)
+          : [];
+        const existsCourse = parsedCourses.some(obj => obj.id === id);
+        const existsStudentData = parsedCourses.some(obj => obj.id === id);
+        const existsAttendanceData = parsedCourses.some(obj => obj.id === id);
+
+        if (existsCourse || existsStudentData || existsAttendanceData) {
           Alert.alert(`Course with ${id} already exists.`);
         } else {
+          const AttendanceObject = {
+            id: id,
+            studentAttendance: {
+              count: new Array(data.length).fill(0), // Adjust the length of the array as needed
+            },
+          };
           // Add new course data
           parsedCourses.push(courseData);
           parsedStudentData.push(studentData);
+          parsedAttendanceData.push(AttendanceObject);
           // Save updated courses back to AsyncStorage
-          await AsyncStorage.setItem('courses', JSON.stringify(parsedCourses));
-          await AsyncStorage.setItem('studentData', JSON.stringify(parsedStudentData));
+          await AsyncStorage.setItem("courses", JSON.stringify(parsedCourses));
+          await AsyncStorage.setItem(
+            "studentData",
+            JSON.stringify(parsedStudentData),
+          );
+          await AsyncStorage.setItem(
+            "AttendanceData",
+            JSON.stringify(parsedAttendanceData),
+          );
 
           // Reset form fields
-          setName('');
-          setId('');
-          setYear('');
-          setSection('');
+          setName("");
+          setId("");
+          setYear("");
+          setSection("");
 
           // Navigate back to course list
-          Alert.alert('Course is added successfully!!');
+          Alert.alert("Course is added successfully!!");
           navigation.goBack();
         }
       } catch (error) {
-        console.log('Error saving course:', error);
-        Alert.alert('Error', 'Failed to save course. Please try again.');
+        console.log("Error saving course:", error);
+        Alert.alert("Error", "Failed to save course. Please try again.");
       }
     } else {
-      Alert.alert('Error', 'Please enter course name, code, and select a year.');
+      Alert.alert(
+        "Error",
+        "Please enter course name, code, and select a year.",
+      );
     }
   };
 
@@ -82,18 +121,21 @@ const AddCourses = ({navigation}) => {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
         {
-          title: 'External Storage Read Permission',
-          message: 'App needs access to read from external storage',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
+          title: "External Storage Read Permission",
+          message: "App needs access to read from external storage",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK",
+        },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Storage permission granted');
+        console.log("Storage permission granted");
       } else {
-        console.log('Storage permission denied');
-        Alert.alert('Permission Denied', 'Storage permission is required to access files.');
+        console.log("Storage permission denied");
+        Alert.alert(
+          "Permission Denied",
+          "Storage permission is required to access files.",
+        );
       }
     } catch (err) {
       console.warn(err);
@@ -101,7 +143,7 @@ const AddCourses = ({navigation}) => {
   };
 
   const pickAndReadExcel = async () => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       await requestAndroidPermissions();
     }
 
@@ -113,21 +155,27 @@ const AddCourses = ({navigation}) => {
       const fileUri = res[0].uri;
       const fileName = res[0].name;
 
-      console.log('File URI: ', fileUri);
-      console.log('File Name: ', fileName);
+      console.log("File URI: ", fileUri);
+      console.log("File Name: ", fileName);
 
-      const file = await RNFS.readFile(fileUri, 'base64');
-      const workbook = XLSX.read(file, { type: 'base64' });
+      const file = await RNFS.readFile(fileUri, "base64");
+      const workbook = XLSX.read(file, {type: "base64"});
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const sheetData = XLSX.utils.sheet_to_json(sheet);
-      setData(sheetData);
-      console.log(data);
+      if(section === "") {
+        setData(sheetData);
+        return;
+      }
+      const filterSheetData = sheetData.filter(item =>
+        section === "A" ? item.RollNumber % 2 !== 0 : item.RollNumber % 2 === 0,
+      );
+      setData(filterSheetData);
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
-        console.log('User canceled the picker');
+        console.log("User canceled the picker");
       } else {
-        console.error('Unknown error: ', err);
+        console.error("Unknown error: ", err);
       }
     }
   };
@@ -185,25 +233,47 @@ const AddCourses = ({navigation}) => {
         />
         <Text style={styles.label}>IV</Text>
       </View>
-      <Text style={styles.label}>Section</Text>
-      <View style={styles.sectionSelected}>
-        <View style={styles.radio}>
-          <RadioButton
-            value="A"
-            status={section === "A" ? "checked" : "unchecked"}
-            onPress={() => setSection("A")}
-          />
-          <Text style={styles.label}>A</Text>
+      <Text style={styles.label}>Course Type</Text>
+        <View style={styles.sectionSelected}>
+          <View style={styles.radio}>
+            <RadioButton
+              value="core"
+              status={type === "core" ? "checked" : "unchecked"}
+              onPress={() => setType("core")}
+            />
+            <Text style={styles.label}>Core</Text>
+          </View>
+          <View style={styles.radio}>
+            <RadioButton
+              value="elective"
+              status={type === "elective" ? "checked" : "unchecked"}
+              onPress={() => setType("elective")}
+            />
+            <Text style={styles.label}>Elective</Text>
+          </View>
         </View>
-        <View style={styles.radio}>
-          <RadioButton
-            value="B"
-            status={section === "B" ? "checked" : "unchecked"}
-            onPress={() => setSection("B")}
-          />
-          <Text style={styles.label}>B</Text>
+
+      {type === "core" && (<View>
+        <Text style={styles.label}>Section</Text>
+        <View style={styles.sectionSelected}>
+          <View style={styles.radio}>
+            <RadioButton
+              value="A"
+              status={section === "A" ? "checked" : "unchecked"}
+              onPress={() => setSection("A")}
+            />
+            <Text style={styles.label}>A</Text>
+          </View>
+          <View style={styles.radio}>
+            <RadioButton
+              value="B"
+              status={section === "B" ? "checked" : "unchecked"}
+              onPress={() => setSection("B")}
+            />
+            <Text style={styles.label}>B</Text>
+          </View>
         </View>
-      </View>
+      </View>)}
       <PaperProvider>
         <View style={styles.upload}>
           <Text style={styles.uploadLabel}>Upload Excel Sheet:</Text>
@@ -214,21 +284,29 @@ const AddCourses = ({navigation}) => {
           </Card.Actions>
         </View>
       </PaperProvider>
-      <View style={{marginTop: 10}}>
+      <View style={{marginTop: 5}}>
         {data.length > 0 && (
           <View>
             <Title>Data from Excel:</Title>
-            {data.map((item, index) => (
-              <View key={index} style={styles.tableContainer}>
-                <Text style={styles.tableElement}>{item.RollNumber}</Text>
-                <Text style={styles.tableElement}>{item.Name}</Text>
-              </View>
-            ))}
+            <View style={styles.table}>
+              {data.map((item, index) => (
+                <View key={index} style={styles.row}>
+                  <Text style={styles.cell}>{item.RollNumber}</Text>
+                  <Text style={styles.cell}>{item.Name}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
       </View>
-      <ReadExcelFile />
-      <Button title="Submit" color="#BE9FE1" onPress={handleSubmit}/>
+      <View style={styles.submitButtonContainer}>
+        <Button
+          title="Submit"
+          style={styles.submitButton}
+          color="#BE9FE1"
+          onPress={handleSubmit}
+        />
+      </View>
     </ScrollView>
   );
 };
@@ -260,8 +338,8 @@ const styles = StyleSheet.create({
   upload: {
     flex: 1,
     flexDirection: "row",
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    alignItems: "center",
+    justifyContent: "flex-start",
     marginVertical: 30,
   },
   uploadLabel: {
@@ -269,14 +347,24 @@ const styles = StyleSheet.create({
     color: "#222831",
     fontWeight: "bold",
   },
-  tableContainer:{
-    flex:1,
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
+  table: {
+    flex: 1,
+    padding: 10,
   },
-  tableElement: {
-    fontSize: 16,
-    color: '#000',
+  row: {
+    flexDirection: "row",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  cell: {
+    flex: 1,
+    padding: 5,
+    textAlign: "center",
+    color: "#000",
+  },
+  submitButtonContainer: {
+    marginVertical: 40,
+    elevation: 5,
   },
 });
