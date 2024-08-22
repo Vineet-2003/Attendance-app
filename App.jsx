@@ -21,11 +21,15 @@ import CourseLists from './src/screens/CourseLists';
 import Courses from './src/screens/Courses';
 import Attendance from './src/screens/Attendance';
 import AddCourses from './src/screens/AddCourses';
-import ViewAttendance from './src/screens/ViewAttendance';
+import GenerateReport from './src/screens/GenerateReport';
+import PreviousRecord from './src/screens/PreviousRecord';
+import AttendanceOE from './src/screens/AttendanceOE';
+import GenerateReportOE from './src/screens/GenerateReportOE';
+import PreviousRecordOE from './src/screens/PreviousRecordOE';
 const Stack = createNativeStackNavigator();
 
 
-function App({navigation}){
+function App(){
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName='CourseList'>
@@ -44,7 +48,7 @@ function App({navigation}){
         }}/>
         <Stack.Screen name='Courses' component={Courses} />
         <Stack.Screen name='Attendance' component={Attendance} 
-          options={{ 
+          options={ ({ navigation }) => ({ 
           title: 'Attendance',
           headerStyle: {
             backgroundColor: '#222831',
@@ -54,10 +58,14 @@ function App({navigation}){
               color: '#fff',
           },
           headerTintColor: '#fff',
-        }}
+        })}
         />
         <Stack.Screen name='AddCourses' component={AddCourses} />
-        <Stack.Screen name='ViewAttendance' component={ViewAttendance} />
+        <Stack.Screen name="PreviousRecord" component={PreviousRecord} />
+        <Stack.Screen name='GenerateReport' component={GenerateReport} />
+        <Stack.Screen name='AttendanceOE' component={AttendanceOE} />
+        <Stack.Screen name='GenerateReportOE' component={GenerateReportOE} />
+        <Stack.Screen name='PreviousRecordOE' component={PreviousRecordOE} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,3 +1,5 @@
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable react/self-closing-comp */
 /* eslint-disable no-shadow */
 /* eslint-disable prettier/prettier */
 /* eslint-disable quotes */
@@ -10,11 +12,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
+  UIManager,
+  LayoutAnimation,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import Calendar from "../components/Calendar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SelectDropdown from "react-native-select-dropdown";
+import {DataTable} from "react-native-paper";
 
 const Attendance = ({navigation, route}) => {
   const {name, id} = route.params;
@@ -32,7 +38,15 @@ const Attendance = ({navigation, route}) => {
     SetDate(data);
   };
 
+  if (
+    Platform.OS === "android" &&
+    UIManager.setLayoutAnimationEnabledExperimental
+  ) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
   useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     AsyncStorage.getItem("studentData")
       .then(studentsJson => {
         if (studentsJson !== null) {
@@ -147,11 +161,7 @@ const Attendance = ({navigation, route}) => {
                     "AttendanceData",
                     JSON.stringify(parsedAttendanceData),
                   );
-                  let str = "";
-                  const absentees = attendance.map((ele, index) => ele !== true ? (str = str + String(studentData[index].RollNumber % 1000) + ", ") : null,).filter(index => index !== null);
-
-                  // console.log(str);
-                  Alert.alert("Attendance Info", str);
+                  Alert.alert("Attendance is Updated");
                   navigation.goBack(); // Navigate back after update
                 },
               },
@@ -169,18 +179,7 @@ const Attendance = ({navigation, route}) => {
             "AttendanceData",
             JSON.stringify(parsedAttendanceData),
           );
-          let str = "";
-          const absentees = attendance
-            .map((ele, index) =>
-              ele !== true
-                ? (str =
-                    str + String(studentData[index].RollNumber % 1000) + ", ")
-                : null,
-            )
-            .filter(index => index !== null);
-
-          // console.log(str);
-          Alert.alert("Attendance Info", str);
+          Alert.alert("Attendance is Saved");
           navigation.goBack(); // Navigate back after saving
         }
       }
@@ -199,6 +198,7 @@ const Attendance = ({navigation, route}) => {
     {title: "Third Class"},
     {title: "Fourth Class"},
   ];
+
   return (
     <ScrollView>
       <Calendar onSendData={getDateFromCalendar} />
@@ -258,33 +258,38 @@ const Attendance = ({navigation, route}) => {
             <Text style={styles.absentText}>{absentCount}</Text>
           </View>
         </View>
+        <View style={styles.gridHeader}>
+          <Text style={styles.gridHeaderText}>Department</Text>
+          <Text style={styles.gridHeaderText}>Roll Number</Text>
+          <Text style={styles.gridHeaderText}>Attendance</Text>
+        </View>
         <ScrollView contentContainerStyle={styles.attendanceContainer}>
-          {attendance.length > 0 &&
-            attendance.map((isPresent, index) => {
-              return (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleToggleAttendance(index)}
-                >
-                  <View
-                    style={[
-                      styles.attendanceItem,
-                      isPresent ? styles.present : styles.absent,
-                    ]}
-                  >
-                    <Text style={styles.attendanceText}>
-                      {studentData[index].RollNumber % 1000}
-                    </Text>
-                    <Icon
-                      name={isPresent ? "checkmark" : "close"}
-                      size={24}
-                      color={isPresent ? "green" : "red"}
-                    />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+          {attendance.length > 0 && attendance.map((isPresent, index) => {
+            return (
+              <TouchableOpacity key={index} onPress={() => handleToggleAttendance(index)}>
+                <View style={[styles.attendanceItem, isPresent ? styles.present : styles.absent]}>
+                  <Text style={styles.attendanceText}>{studentData[index].Department}</Text>
+                  <Text style={styles.attendanceText}>{studentData[index].RollNumber}</Text>
+                  <Icon name={isPresent ? 'checkmark' : 'close'} size={24} color={isPresent ? 'green' : 'red'} />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
+
+        {/* <ScrollView contentContainerStyle={styles.attendanceContainer}>
+          {attendance.length > 0 && attendance.map((isPresent, index) => {
+            return (
+              <TouchableOpacity key={index} onPress={() => handleToggleAttendance(index)}>
+                <View style={[styles.attendanceItem, isPresent ? styles.present : styles.absent]}>
+                  <Text style={styles.attendanceText}>{studentData[index].Department.split(" ")[0]}</Text>
+                  <Text style={styles.attendanceText}>{studentData[index].RollNumber}</Text>
+                  <Icon name={isPresent ? 'checkmark' : 'close'} size={24} color={isPresent ? 'green' : 'red'} />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView> */}
         <View style={styles.floatingButtonContainer}>
           <TouchableOpacity style={styles.button} onPress={toggleAllAttendance}>
             <Icon
@@ -340,16 +345,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "red",
   },
+  gridHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+    // paddingHorizontal: 20,
+  },
+  gridHeaderText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 5,
+  },
   attendanceContainer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    flexWrap: "wrap",
+    flexDirection: "column",
     marginTop: 20,
   },
   attendanceItem: {
-    marginHorizontal: 10,
-    marginBottom: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    marginVertical: 5,
     padding: 10,
     borderRadius: 5,
     backgroundColor: "#EEEEEE",
@@ -365,6 +381,13 @@ const styles = StyleSheet.create({
   attendanceText: {
     fontSize: 18,
     color: "#000",
+    marginRight: 10,
+  },
+  attendanceTextDept: {
+    fontSize: 18,
+    color: "#000",
+    marginRight: 10,
+    justifyItem: "flex-start",
   },
   floatingButtonContainer: {
     flexDirection: "row",
@@ -427,4 +450,5 @@ const styles = StyleSheet.create({
     fontSize: 28,
     marginRight: 8,
   },
+
 });

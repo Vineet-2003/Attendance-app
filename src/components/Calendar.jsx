@@ -5,9 +5,13 @@
 /* eslint-disable no-trailing-spaces */
 /* eslint-disable quotes */
 /* eslint-disable prettier/prettier */
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform, UIManager, LayoutAnimation } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import Icon from "react-native-vector-icons/Ionicons";
+
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const Calendar = ({ onSendData }) => {
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -99,7 +103,7 @@ const Calendar = ({ onSendData }) => {
         <Text style={styles.fullDateText}>
           {daysOfWeek[currentDay]}, {currentDateNum} {months[currentMonth]} {currentYear}
         </Text>
-        <TouchableOpacity onPress={() => setShowMonthView(!showMonthView)}>
+        <TouchableOpacity onPress={() => {setShowMonthView(!showMonthView); LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)}}>
           <Icon name="calendar" size={28} color="#000"/>
         </TouchableOpacity>
       </View>

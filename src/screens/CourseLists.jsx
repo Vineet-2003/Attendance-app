@@ -51,7 +51,7 @@ const CourseLists = ({navigation}) => {
               }
             >
               <View style={styles.ButtonContainer}>
-                <Text style={styles.text}>{course.name}</Text>
+                <Text style={styles.text}>{course.name + ` (${course.session}'${course.yearStudy})`}</Text>
               </View>
             </Pressable>
           ))}

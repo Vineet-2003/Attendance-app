@@ -1,3 +1,4 @@
+/* eslint-disable no-trailing-spaces */
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable prettier/prettier */
 /* eslint-disable eol-last */
@@ -5,15 +6,22 @@
 /* eslint-disable quotes */
 /* eslint-disable prettier/prettier */
 
-import {StyleSheet, Text, View, Button, Alert, ScrollView, FlatList} from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  Alert,
+  FlatList,
+  Animated,
+} from "react-native";
 import React, {useEffect, useState} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {Title} from "react-native-paper";
+import {Modal, PaperProvider, Portal} from "react-native-paper";
 
 const Courses = props => {
   const [studentData, setStudentData] = useState([]);
-  const [flag, setFlag] = useState(false);
-  const {name, id, year, type, section} = props.route.params;
+  const {name, id, year, type, electiveType, section, session} = props.route.params;
   const navigation = props.navigation;
 
   useEffect(() => {
@@ -26,7 +34,6 @@ const Courses = props => {
           if (filteredCourse.length > 0) {
             const data = filteredCourse[0].studentData;
             setStudentData(data);
-            console.log(`Student data for ${id}:`, data[0].name);
           } else {
             console.log(`No course found with ID ${id}`);
           }
@@ -64,7 +71,9 @@ const Courses = props => {
               console.error("Error deleting course:", error);
             }
             try {
-              const existingStudentData = await AsyncStorage.getItem("studentData");
+              const existingStudentData = await AsyncStorage.getItem(
+                "studentData",
+              );
               const parsedStudentData = existingStudentData
                 ? JSON.parse(existingStudentData)
                 : [];
@@ -79,7 +88,9 @@ const Courses = props => {
               console.error("Error deleting studentData:", error);
             }
             try {
-              const existingAttendanceData = await AsyncStorage.getItem("AttendanceData");
+              const existingAttendanceData = await AsyncStorage.getItem(
+                "AttendanceData",
+              );
               const parsedAttendanceData = existingAttendanceData
                 ? JSON.parse(existingAttendanceData)
                 : [];
@@ -100,52 +111,59 @@ const Courses = props => {
     );
   };
 
-  const viewStudentData = () => {
-    const bool = flag;
-    console.log(bool);
-    setFlag(!bool);
-  };
+  const navigateToAttendance = () => navigation.navigate("Attendance", props.route.params);
+  const navigateToAttendanceOE = () => navigation.navigate("AttendanceOE", props.route.params);
 
-  const renderItem = ({ item }) => {
-    if (item.type === 'course') {
+  const navigateToGenerateReport = () => navigation.navigate("GenerateReport", props.route.params);
+  const navigateToGenerateReportOE = () => navigation.navigate("GenerateReportOE", props.route.params);
+
+  const navigateToPreviousRecord = () => navigation.navigate("PreviousRecord", props.route.params);
+  const navigateToPreviousRecordOE = () => navigation.navigate("PreviousRecordOE", props.route.params);
+
+  const renderItem = ({item}) => {
+    if (item.type === "course") {
       return (
         <View style={styles.courseContainer}>
           <Text style={styles.courseItem}>Course Name: {name}</Text>
           <Text style={styles.courseItem}>Course Code: {id}</Text>
           <Text style={styles.courseItem}>Year: {year}</Text>
+          <Text style={styles.courseItem}>Session: {session}</Text>
           <Text style={styles.courseItem}>Type: {type}</Text>
-          {type === "elective" && (<Text style={styles.courseItem}>Section: {section}</Text>)}
+          {electiveType && <Text style={styles.courseItem}>Elective-Type: {electiveType}</Text>}
+          {type === "core" && (
+            <Text style={styles.courseItem}>Section: {section}</Text>
+          )}
         </View>
       );
-    } else if (item.type === 'student') {
-      return (
-        <View style={styles.row}>
-          <Text style={styles.cell}>{item.RollNumber}</Text>
-          <Text style={styles.cell}>{item.Name}</Text>
-        </View>
-      );
-    } else if (item.type === 'button') {
+    } else if (item.type === "button") {
       return (
         <View style={styles.buttonContainer}>
           <View style={styles.button}>
             <Button
               color="#00ADB5"
-              title={flag ? "Remove Student Data" : "View Student Data"}
-              onPress={viewStudentData}
+              title={"View Student Data"}
+              onPress={showModal}
             />
           </View>
           <View style={styles.button}>
             <Button
               color="#00ADB5"
               title="Take Attendance"
-              onPress={() => navigation.navigate("Attendance", props.route.params)}
+              onPress={electiveType === "OE" ? navigateToAttendanceOE : navigateToAttendance}
             />
           </View>
           <View style={styles.button}>
             <Button
               color="#00ADB5"
-              title="View Attendance"
-              onPress={() => navigation.navigate("ViewAttendance", props.route.params)}
+              title="Previous Records"
+              onPress={electiveType === "OE" ? navigateToPreviousRecordOE : navigateToPreviousRecord}
+            />
+          </View>
+          <View style={styles.button}>
+            <Button
+              color="#00ADB5"
+              title="Generate Report"
+              onPress={electiveType === "OE" ? navigateToGenerateReportOE : navigateToGenerateReport}
             />
           </View>
           <View style={styles.button}>
@@ -160,19 +178,71 @@ const Courses = props => {
     }
   };
 
-  const data = [
-    { type: 'course' },
-    ...flag ? studentData.map((item) => ({ ...item, type: 'student' })) : [],
-    { type: 'button' },
-  ];
+  const data = [{type: "course"}, {type: "button"}];
+
+  const [visible, setVisible] = useState(false);
+  const opacity = useState(new Animated.Value(0))[0];
+
+  // Reduce animation duration to improve UX speed
+const animationDuration = 10; // Set duration to 150ms for faster animations
+
+const showModal = () => {
+  setVisible(true);
+  Animated.timing(opacity, {
+    toValue: 1,
+    duration: animationDuration,
+    useNativeDriver: true,
+  }).start();
+};
+
+const hideModal = () => {
+  // setVisible(false);
+  Animated.timing(opacity, {
+    toValue: 0,
+    duration: animationDuration,
+    useNativeDriver: true,
+  }).start(() => setVisible(false));
+};
+  
+  const containerStyle = {
+    backgroundColor: "white",
+    padding: 20,
+    marginHorizontal: 20,
+    marginVertical: 20,
+    opacity: opacity, // Link opacity to Animated View
+  };
 
   return (
-    <FlatList
-      data={data}
-      renderItem={renderItem}
-      keyExtractor={(item, index) => index.toString()}
-      contentContainerStyle={styles.scrollView}
-    />
+    <PaperProvider>
+      <Portal>
+        <Modal
+          visible={visible}
+          onDismiss={hideModal}
+          contentContainerStyle={containerStyle}
+        >
+          <View>
+            <Text style={styles.headingText}>Student Data of {name}</Text>
+            <FlatList
+              data={studentData}
+              renderItem={({item}) => (
+                <View style={styles.row}>
+                  {electiveType === "OE" && <Text style={styles.cell}>{item.Department}</Text>}
+                  <Text style={styles.cell}>{item.RollNumber}</Text>
+                  <Text style={styles.cell}>{item.Name}</Text>
+                </View>
+              )}
+              keyExtractor={(item, index) => index.toString()}
+            />
+          </View>
+        </Modal>
+      </Portal>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index.toString()}
+        contentContainerStyle={styles.scrollView}
+      />
+    </PaperProvider>
   );
 };
 
@@ -189,54 +259,60 @@ const styles = StyleSheet.create({
   courseContainer: {
     marginBottom: 20,
     padding: 15,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#f8f8f8",
     borderRadius: 10,
   },
   courseItem: {
     fontSize: 20,
     marginBottom: 5,
-    color: '#000',
+    color: "#000",
   },
   studentDataContainer: {
     marginTop: 10,
     padding: 15,
-    backgroundColor: '#e8e8e8',
+    backgroundColor: "#e8e8e8",
     borderRadius: 10,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   tableContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
   tableElement: {
     fontSize: 16,
-    color: '#000',
+    color: "#000",
   },
   table: {
     flex: 1,
     padding: 10,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: "#ddd",
   },
   cell: {
     flex: 1,
     padding: 5,
-    textAlign: 'center',
-    color: '#000'
+    textAlign: "center",
+    color: "#000",
   },
   buttonContainer: {
     marginTop: 20,
   },
   button: {
     marginBottom: 10,
+  },
+  headingText: {
+    fontSize: 18,
+    color: "#000",
+    textAlign: "center",
+    margin: 5,
   },
 });
